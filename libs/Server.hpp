@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <unistd.h>
+#include <sstream>
 
 
 class Server {
@@ -29,6 +30,12 @@ class Server {
 
         void init_server();
         void execute_server();
+        void find_first_msg(int wc);
+        void parse_msg(std::string str);
+        void handle_cmds();
+
+        void handle_pass(Client *client, std::vector<std::string> args);
+        void handle_nick(Client *client, std::vector<std::string> args);
         ~Server();
 };
 

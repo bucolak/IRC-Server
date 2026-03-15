@@ -13,12 +13,22 @@ class Client {
         std::string user_name;
         std::string nick_name;
         std::string buffer;
+        int is_registered;
+        bool is_authenticated;
+
     public:
         Client(int client_fd);
         int get_client_fd();
+        int get_is_registered();
         std::string get_user_name();
         std::string get_nick_name();
         std::string get_buffer();
+        void set_buffer(std::string str);
+        void set_is_authenticated(bool state);
+
+        void buffer_append(std::string newstr);
+
+       // ~Client();
 };
 
 #endif

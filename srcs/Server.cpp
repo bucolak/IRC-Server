@@ -1,4 +1,5 @@
 #include "../libs/Server.hpp"
+#include "../libs/ProtocolMessages.hpp"
 
 Server::Server(int port, std::string password)
 {
@@ -55,6 +56,98 @@ void Server::init_server()
     fds.push_back(server_poll);
 }
 
+void Server::find_first_msg(int wc)
+{
+    size_t i;
+    std::string msg = clients[fds[wc].fd]->get_buffer();
+    while((i = msg.find("\r\n")) != std::string::npos)
+    {
+        std::string new_msg = msg.substr(0, i + 2);
+        clients[fds[wc].fd]->set_buffer(msg.erase(0, i + 2));
+        parse_msg(new_msg.substr(0,i));
+        // TESTING
+        // std::cout<<"Client["<<fds[wc].fd<<"] : "<<new_msg<<std::endl;
+    }
+}
+
+void Server::parse_msg(std::string str)
+{
+    std::vector<std::string> collection;
+    size_t i;
+    std::string before_delimiter;
+    std::string after_delimiter;
+    std::string new_str;
+    if((i = str.find(":")) != std::string::npos)
+    {
+        before_delimiter = str.substr(0, i);
+        after_delimiter = str.substr(i, str.length() - i);
+        std::stringstream ss(before_delimiter);
+        while(ss >> new_str)
+        {
+            collection.push_back(new_str);
+        }
+        collection.push_back(after_delimiter);
+    }
+    else
+    {
+        std::stringstream ss(str);
+        while(ss >> new_str)
+        {
+            collection.push_back(new_str);
+        }
+    }
+    //TESTING
+    // std::cout<<"---------"<<std::endl;
+    // for (size_t k = 0; k < collection.size(); k++) {
+    //     std::cout << "c[" << k << "] : " << collection[k] << std::endl;
+    // }
+    // std::cout<<"---------"<<std::endl;
+}
+
+// void Server::handle_cmds()
+// {
+//     std::string funcs_names[8] = { "PASS",
+//                                 "NICK",
+//                                 "USER",
+//                                 "JOIN",
+//                                 "PART",
+//                                 "KICK"
+//                                 "QUIT",
+//                                 "PRIVMSG",
+//                                 "PING"};
+//     void (Server)
+
+// }
+
+void Server::handle_pass(Client *client, std::vector<std::string> collections)
+{
+    std::string nick = client->get_nick_name().empty() ? "*" : client->get_nick_name();
+    if(collections.size() < 2)
+    {
+        std::string rply = ERR_NEEDMOREPARAMS(nick, "PASS");
+        send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        return ;
+    }
+    if(client->get_is_registered() == 1)
+    {
+        std::string rply = ERR_ALREADYREGISTERED(nick);
+        send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        return ;
+    }
+    if(collections[1] != password)
+    {
+        std::string rply = ERR_PASSWDMISMATCH(nick);
+        send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        return ;
+    }
+    client->set_is_authenticated(true);
+}
+
+void Server::handle_nick(Client *client, std::vector<std::string> collections)
+{
+    if(client->get_nick_name().empty())
+}
+
 void Server::execute_server()
 {
     while(1)
@@ -89,12 +182,12 @@ void Server::execute_server()
             {
                 if(fds[i].revents & POLLIN)
                 {
-                    char buf[1000] = {};
-                    int result_recv = recv(fds[i].fd, buf, sizeof(buf), 0);
+                    char messg[1000] = {};
+                    int result_recv = recv(fds[i].fd, messg, sizeof(messg), 0);
                     if(result_recv > 0)
                     {
-                        std::cout<<"There is a message: "<<buf<<std::endl;
-                        send(fds[i].fd, buf, result_recv, 0);
+                        clients[fds[i].fd]->buffer_append(messg);
+                        find_first_msg(i);
                     }
                     else if(result_recv == 0)
                     {
