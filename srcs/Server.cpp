@@ -143,9 +143,120 @@ void Server::handle_pass(Client *client, std::vector<std::string> collections)
     client->set_is_authenticated(true);
 }
 
+bool Server::is_same_nick(std::string nick)
+{
+    std::map<int, Client*>::iterator it;
+    for(it = clients.begin(); it != clients.end(); ++it)
+    {
+        if(it->second->get_nick_name() == nick)
+            return true;
+    }
+    return false;
+}
+
+bool Server::is_valid_nick(std::string nick)
+{
+    if(nick.empty() || nick.length() > 9)
+        return false;
+    if(std::isdigit(nick[0]) || nick[0] == '#' || nick[0] == '&' || nick[0] == ':')
+        return false;
+    std::string allowed = "{}-|^_'[]";
+    for(int i = 0; i < nick.length(); i++)
+    {
+        if(!std::isalnum(nick[i]) && allowed.find(nick[i]) == std::string::npos)
+            return false;
+    }
+    return true;
+}
+
 void Server::handle_nick(Client *client, std::vector<std::string> collections)
 {
-    if(client->get_nick_name().empty())
+    std::string nick = client->get_nick_name().empty() ? "*" : client->get_nick_name();
+
+    if(!client->get_is_authenticated())
+    {
+        std::cout<<"Please complete the PASS stage first"<<std::endl;
+        return;
+    }
+    if(collections.size() < 2)
+    {
+        std::string rply = ERR_NONICKNAMEGIVEN(nick);
+        send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        return;
+    }
+    if(!is_valid_nick(collections[1]))
+    {
+        std::string rply = ERR_ERRONEUSNICKNAME(nick, collections[1]);
+        send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        return;
+    }
+    if(is_same_nick(collections[1]))
+    {
+        std::string rply = ERR_NICKNAMEINUSE(nick, collections[1]);
+        send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        return;
+    }
+    client->set_nick_name(collections[1]);
+}
+
+void Server::handle_user(Client *client, std::vector<std::string> collections)
+{
+    if(collections.size() != 5)
+    {
+        std::string rply = ERR_NEEDMOREPARAMS(client->get_nick_name(), collections[0]);
+        send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        return;
+    }
+    if(client->get_is_registered())
+    {
+        std::string rply = ERR_ALREADYREGISTERED(client->get_nick_name());
+        send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        return;
+    }
+    if (client->get_is_authenticated() && 
+        !client->get_nick_name().empty() && 
+        !client->get_user_name().empty())
+        {
+            client->set_is_registered(true);
+            std::string rply = RPL_WELCOME(client->get_nick_name(), client->get_user_name(), "ANLAMADIM");
+            send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        }
+}
+
+void Server::handle_join(Client *client, std::vector<std::string> collections)
+{
+    std::string nick = client->get_nick_name().empty() ? "*" : client->get_nick_name();
+    if(collections.size() != 2)
+    {
+        std::string rply = ERR_NEEDMOREPARAMS(nick, collections[0]);
+        send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        return;
+    }
+    if(!client->get_is_registered())
+    {
+        std::string rply = ERR_NOTREGISTERED(nick);
+        send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        return;
+    }
+    if(collections[1][0] != '#' && collections[1][0] != '&')
+    {
+        std::string rply = ERR_NOSUCHCHANNEL(nick, collections[1]);
+        send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        return;
+    }
+
+    if(chnnls.find(collections[1]) == chnnls.end())
+    {
+        Channel *new_ch = new Channel(collections[1]);
+        new_ch->add_members(client, true);
+        chnnls[collections[1]] = new_ch;
+    }
+    else
+    {
+        chnnls[collections[1]]->add_members(client, false);
+    }
+    std::string msg = ":"+client->get_nick_name()+"!"+client->get_user_name()+"@localhost JOIN :"+collections[1]+"\r\n";
+    chnnls[collections[1]]->broadcast_msg(msg, -1);
 }
 
 void Server::execute_server()

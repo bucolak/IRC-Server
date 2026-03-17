@@ -11,6 +11,7 @@
 #include <poll.h>
 #include <unistd.h>
 #include <sstream>
+#include "Channel.hpp"
 
 
 class Server {
@@ -18,6 +19,7 @@ class Server {
     private:
         std::vector<pollfd> fds;
         std::map<int, Client*> clients;
+        std::map<std::string, Channel*> chnnls;
         std::string password;
         int port;
         int server_fd;
@@ -36,6 +38,11 @@ class Server {
 
         void handle_pass(Client *client, std::vector<std::string> args);
         void handle_nick(Client *client, std::vector<std::string> args);
+        void handle_user(Client *client, std::vector<std::string> args);
+        void handle_join(Client *client, std::vector<std::string> args);
+
+        bool is_same_nick(std::string nick);
+        bool is_valid_nick(std::string nick);
         ~Server();
 };
 

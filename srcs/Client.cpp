@@ -30,6 +30,11 @@ std::string Client::get_buffer()
     return buffer;
 }
 
+bool Client::get_is_authenticated()
+{
+    return is_authenticated;
+}
+
 void Client::set_buffer(std::string str)
 {
     buffer = str;
@@ -38,6 +43,16 @@ void Client::set_buffer(std::string str)
 void Client::set_is_authenticated(bool state)
 {
     is_authenticated = state;
+}
+
+void Client::set_is_registered(bool state)
+{
+    is_registered = state;
+}
+
+void Client::set_nick_name(std::string nick)
+{
+    nick_name = nick;
 }
 
 void Client::buffer_append(std::string newstr)

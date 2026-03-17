@@ -1,4 +1,71 @@
-ERR_NONICKNAMEGIVEN (431)
-ERR_ERRONEUSNICKNAME (432)
-ERR_NICKNAMEINUSE (433)
-ERR_NICKCOLLISION (436)
+1. PASS (Giriş Şifresi)
+Hiç parametre yoksa (PASS\r\n): Kullanıcıya ERR_NEEDMOREPARAMS (461) hatası gönderilir. Client'ı atmak zorunda değilsin ama şifre girmeden ilerlemesine izin verme.
+
+Şifre Yanlışsa: ERR_PASSWDMISMATCH (464) hatası gönderilir. Güvenlik gereği Client'ı hemen close() ile atmalısın. (42'de genellikle yanlış şifre anında bağlantı koparma sebebidir).
+
+Zaten Kayıtlıysa: Kullanıcı zaten giriş yapmışken tekrar PASS yollarsa ERR_ALREADYREGISTRED (462) hatası verilir.
+
+Kural: PASS, sunucuya gönderilen ilk komut olmalıdır.
+
+2. NICK (Takma Ad Belirleme)
+İsim boşsa (NICK\r\n): ERR_NONICKNAMEGIVEN (431) hatası yolla.
+
+İsim kullanımdaysa: Senin sunucunda başkası bu ismi almışsa ERR_NICKNAMEINUSE (433) hatası yolla.
+
+Geçersiz Karakter: İsim içinde yasaklı karakter (boşluk, virgül, *, !, @ vb.) varsa veya sayı ile başlıyorsa ERR_ERRONEUSNICKNAME (432) yolla.
+
+Kural: Kullanıcı PASS aşamasını geçmeden NICK yapmaya çalışırsa izin verme.
+
+3. USER (Kullanıcı Bilgileri)
+Parametre Eksikse: USER en az 4 parametre bekler. Eksikse ERR_NEEDMOREPARAMS (461) yolla.
+
+Zaten Kayıtlıysa: Bir kere USER yapıldıktan sonra tekrar yapılamaz, ERR_ALREADYREGISTRED (462) yolla.
+
+Kural: PASS, NICK ve USER üçlüsü tamamlandığı an kullanıcıya RPL_WELCOME (001) mesajı gitmelidir. Bu mesaj gitmeden kullanıcı "bağlı" sayılmaz.
+
+4. JOIN (Kanala Giriş)
+Parametre Yoksa: ERR_NEEDMOREPARAMS (461).
+
+Kanal Adı Yanlışsa: Kanal adı # veya & ile başlamıyorsa ERR_NOSUCHCHANNEL (403) yolla.
+
+Kullanıcı Kayıtlı Değilse: PASS, NICK, USER bitmeden JOIN yapamaz.
+
+5. PRIVMSG (Mesaj Gönderme)
+Alıcı Yoksa (PRIVMSG\r\n): ERR_NORECIPIENT (411).
+
+Mesaj Metni Yoksa (PRIVMSG Buket\r\n veya PRIVMSG Buket :\r\n): ERR_NOTEXTTOSEND (412).
+
+Alıcı Bulunamadıysa: Hedef Nick veya Kanal yoksa ERR_NOSUCHNICK (401) veya ERR_NOSUCHCHANNEL (403).
+
+Kanalda Değilse: Kullanıcı bir kanala üye değilken oraya mesaj atmaya çalışırsa (veya kanal dışarıya kapalıysa) ERR_CANNOTSENDTOCHAN (404).
+
+6. KICK (Birini Kanaldan Atma)
+Parametre Eksikse: ERR_NEEDMOREPARAMS (461).
+
+Kanal Yoksa: ERR_NOSUCHCHANNEL (403).
+
+Atan Kişi Operatör Değilse: Eğer sen kanal yöneticisi (@) değilsen başkasını atamazsın! ERR_CHANOPRIVSNEEDED (482) yolla.
+
+Atılacak Kişi Kanalda Yoksa: ERR_USERNOTINCHANNEL (441).
+
+7. PING / PONG
+Parametre Yoksa: ERR_NOORIGIN (409).
+
+Normal Durum: Sunucuya PING :herhangibisey gelirse, sunucun anında PONG :herhangibisey dönmelidir.
+----------------------------------
+
+-is_authenticated (Şifre Onayı):
+
+Görevi: Kullanıcı doğru sunucu şifresini girdi mi?
+
+Ne zaman true olur? PASS komutu başarıyla tamamlandığında.
+
+Önemi: Bu true olmadan NICK ve USER komutlarını bile çalıştırmamalıyız. Kapıdaki ilk kilit budur.
+
+-is_registered (Kayıt Tamamlandı):
+
+Görevi: Kullanıcı artık "tanınıyor" mu?
+
+Ne zaman true olur? Kullanıcı hem PASS, hem NICK, hem de USER adımlarını başarıyla geçtiği an.
+
+Önemi: Bu true olduğu an kullanıcıya RPL_WELCOME (001) mesajı gider ve adam artık JOIN, PRIVMSG gibi komutları kullanabilir hale gelir.

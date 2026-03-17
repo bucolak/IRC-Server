@@ -47,4 +47,10 @@
 
 #define ERR_NOTEXTTOSEND(client) (std::string(":") + "ircserv 412 " + client + " :No text to send\r\n")
 
+//WELCOME
+#define RPL_WELCOME(nick, user, host) (std::string(":") + "ircserv 001 " + nick + " :Welcome to the ircserv Network, " + nick + "!" + user + "@" + host + "\r\n")
+
+//---
+#define ERR_NOTREGISTERED(client) (":ircserv 451 " + client + " :You have not registered\r\n")
+
 #endif
