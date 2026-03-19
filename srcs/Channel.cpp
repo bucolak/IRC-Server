@@ -5,6 +5,25 @@ Channel::Channel(std::string channel_name)
     this->channel_name = channel_name;
 }
 
+std::string Channel::get_topic()
+{
+    return channel_topic;
+}
+
+std::string Channel::get_members()
+{
+    std::map<Client *, bool>::iterator it;
+    std::string str;
+    for(it = members.begin(); it != members.end(); ++it)
+    {
+        if(it->second == true)
+            str += (" @" + it->first->get_user_name());
+        else
+            str += (" " + it->first->get_user_name());
+    }
+    return str;
+}
+
 void Channel::add_members(Client *client, bool is_oprtr)
 {
     members[client] = is_oprtr;

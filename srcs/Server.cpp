@@ -228,7 +228,7 @@ void Server::handle_join(Client *client, std::vector<std::string> collections)
     std::string nick = client->get_nick_name().empty() ? "*" : client->get_nick_name();
     if(collections.size() != 2)
     {
-        std::string rply = ERR_NEEDMOREPARAMS(nick, collections[0]);
+        std::string rply = ERR_NEEDMOREPARAMS(nick, "JOIN");
         send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
         return;
     }
@@ -255,8 +255,98 @@ void Server::handle_join(Client *client, std::vector<std::string> collections)
     {
         chnnls[collections[1]]->add_members(client, false);
     }
+    // kullanıcnın kanala girdiğine dair kanaldaki herkese mesaj
     std::string msg = ":"+client->get_nick_name()+"!"+client->get_user_name()+"@localhost JOIN :"+collections[1]+"\r\n";
     chnnls[collections[1]]->broadcast_msg(msg, -1);
+
+    // yeni kullanıcıya topic bilgisi gönderme
+    if(chnnls[collections[1]]->get_topic().empty())
+    {
+        msg = RPL_NOTOPIC(nick, collections[1]);
+        send(client->get_client_fd(), msg.c_str(), msg.length(), 0);
+    }
+    else
+    {
+        msg = RPL_TOPIC(nick, collections[1], chnnls[collections[1]]->get_topic());
+        send(client->get_client_fd(), msg.c_str(), msg.length(), 0);
+    }
+
+    // yeni kullanıcıya kanaldaki kişilerin listesi gönderilir
+    msg = RPL_NAMREPLY(client->get_nick_name(), collections[1], chnnls[collections[1]]->get_members());
+    send(client->get_client_fd(), msg.c_str(), msg.length(), 0);
+    msg = RPL_ENDOFNAMES(client->get_nick_name(), collections[1]); // bu da listenin bittiğine dair bir mesaj imiş
+    send(client->get_client_fd(), msg.c_str(), msg.length(), 0);
+}
+
+bool Server::has_this_channel(std::string c_name)
+{
+    if(chnnls.find(c_name) != chnnls.end())
+        return true;
+    return false;
+}
+
+bool Server::is_member_of_channel(Client *client, std::string c_name)
+{
+    std::string members = chnnls[c_name]->get_members();
+    if(members.find(client->get_nick_name()) != std::string::npos)
+        return true;
+    return false;
+}
+
+Client* Server::get_client_for_fd(std::string nick)
+{
+    std::map<int, Client*>::iterator it;
+    for(it = clients.begin(); it != clients.end(); ++it)
+    {
+        if(it->second->get_nick_name() == nick)
+            return it->second;
+    }
+    return NULL;
+}
+
+void Server::handle_privmsg(Client *client, std::vector<std::string> collections)
+{
+    if(collections.size() < 2)
+    {
+        std::string rply = ERR_NORECIPIENT(client->get_nick_name());
+        send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        return;
+    }
+    if(collections[2].empty())
+    {
+        std::string rply = ERR_NOTEXTTOSEND(client->get_nick_name());
+        send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        return;
+    }
+    std::string prefix = ":" + client->get_nick_name() + "!" + client->get_user_name() + "@localhost"; // // Mesajı gönderen kişinin kimlik bilgisi (Prefix)
+    std::string all_msg = prefix + " PRIVMSG " + collections[1] + " :" + collections[2] + "\r\n";;
+    if(collections[1][0] == '#' || collections[1][0] == '&')
+    {
+        if(!has_this_channel(collections[1]))
+        {
+            std::string rply = ERR_NOSUCHCHANNEL(client->get_nick_name(), collections[1]);
+            send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+            return;
+        }
+        if(!is_member_of_channel(client, collections[1]))
+        {
+            std::string rply = ERR_CANNOTSENDTOCHAN(client->get_nick_name(), collections[1]);
+            send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+            return;
+        }
+        chnnls[collections[1]]->broadcast_msg(all_msg, client->get_client_fd());
+    }
+    else
+    {
+        Client *c = get_client_for_fd(collections[1]);
+        if(!c)
+        {
+            std::string rply = ERR_NOSUCHNICK(client->get_nick_name(), collections[1]);
+            send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+            return;
+        }
+        send(c->get_client_fd(), all_msg.c_str(), all_msg.length(), 0);
+    }
 }
 
 void Server::execute_server()

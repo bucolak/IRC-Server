@@ -69,3 +69,4 @@ Görevi: Kullanıcı artık "tanınıyor" mu?
 Ne zaman true olur? Kullanıcı hem PASS, hem NICK, hem de USER adımlarını başarıyla geçtiği an.
 
 Önemi: Bu true olduğu an kullanıcıya RPL_WELCOME (001) mesajı gider ve adam artık JOIN, PRIVMSG gibi komutları kullanabilir hale gelir.
+

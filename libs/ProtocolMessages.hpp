@@ -53,4 +53,13 @@
 //---
 #define ERR_NOTREGISTERED(client) (":ircserv 451 " + client + " :You have not registered\r\n")
 
+#define RPL_NOTOPIC(client, channel) (":ircserv 331 " + client + " " + channel + " :No topic is set\r\n")
+
+#define RPL_TOPIC(client, channel, topic) (":ircserv 332 " + client + " " + channel + " :" + topic + "\r\n")
+
+#define RPL_NAMREPLY(client, channel, list) (":ircserv 353 " + client + " = " + channel + " :" + list + "\r\n")
+
+#define RPL_ENDOFNAMES(client, channel) (":ircserv 366 " + client + " = " + channel + " :End of /NAMES list\r\n")
+
+
 #endif
