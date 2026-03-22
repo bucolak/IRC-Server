@@ -5,6 +5,11 @@ Channel::Channel(std::string channel_name)
     this->channel_name = channel_name;
 }
 
+std::string Channel::get_channel_name()
+{
+    return channel_name;
+}
+
 std::string Channel::get_topic()
 {
     return channel_topic;
@@ -43,5 +48,16 @@ void Channel::broadcast_msg(std::string &msg, int fd)
             send(it->first->get_client_fd(), msg.c_str(), msg.length(), 0);
     }
 }
+
+bool Channel::is_operator(Client *client)
+{
+    for(std::map<Client *, bool>::iterator it = members.begin(); it != members.end(); ++it)
+    {
+        if(it->first == client && it->second == true)
+            return true;
+    }
+    return false;
+}
+
 
 Channel::~Channel() {}

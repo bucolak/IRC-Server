@@ -349,6 +349,131 @@ void Server::handle_privmsg(Client *client, std::vector<std::string> collections
     }
 }
 
+void Server::handle_part(Client *client, std::vector<std::string> collections)
+{
+    std::string nick = client->get_nick_name().empty() ? "*" : client->get_nick_name();
+    if(collections.size() < 2)
+    {
+        std::string rply = ERR_NEEDMOREPARAMS(nick, "PART");
+        send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        return;
+    }
+    if(!has_this_channel(collections[1]))
+    {
+        std::string rply = ERR_NOSUCHCHANNEL(client->get_nick_name(), collections[1]);
+        send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        return;
+    }
+    if(!is_member_of_channel(client, collections[1]))
+    {
+        std::string rply = ERR_NOTONCHANNEL(client->get_nick_name(), collections[1]);
+        send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        return;
+    }
+    std::string prefix = ":" + client->get_nick_name() + "!" + client->get_user_name() + "@localhost";
+    std::string msg;
+    if(collections.size()>2 && collections[2].size()>0)
+        msg = prefix + " PART "+collections[1] + " :"+collections[2]+"\r\n";
+    else
+        msg = prefix + " PART "+collections[1] + " :"+client->get_nick_name()+"\r\n";
+    chnnls[collections[1]]->broadcast_msg(msg, -1);
+    chnnls[collections[1]]->remove_members(client);
+    if(chnnls[collections[1]]->get_members().empty())
+    {
+        Channel *tmp = chnnls[collections[1]];
+        chnnls.erase(collections[1]);
+        delete tmp;
+    }
+}
+
+void Server::handle_quit(Client *client, std::vector<std::string> collections)
+{
+    std::vector<std::string> deleted;
+    std::string prefix = ":" + client->get_nick_name() + "!" + client->get_user_name() + "@localhost";
+    std::string msg;
+    if(collections.size() == 2)
+        msg = prefix + " QUIT :Quit: " + collections[1]+"\r\n";
+    else
+        msg = prefix + " QUIT :Quit: " + client->get_nick_name()+"\r\n";
+    for(std::map<std::string, Channel*>::iterator it = chnnls.begin(); it != chnnls.end(); ++it)
+    {
+        if(is_member_of_channel(client, it->first))
+            deleted.push_back(it->first);
+    }
+    for(std::vector<std::string>::iterator it = deleted.begin(); it != deleted.end(); ++it)
+    {
+        chnnls[*it]->broadcast_msg(msg, -1);
+        chnnls[*it]->remove_members(client);
+        if(chnnls[*it]->get_members().empty())
+        {
+            Channel *tmp = chnnls[*it];
+            chnnls.erase(*it);
+            delete tmp;
+        }
+    }
+    for(std::vector<pollfd>::iterator it = fds.begin(); it != fds.end(); ++it)
+    {
+        if(it->fd == client->get_client_fd())
+        {
+            fds.erase(it);
+            break;
+        }
+    }
+    clients.erase(client->get_client_fd());
+    close(client->get_client_fd());
+    delete client;
+}
+
+void Server::handle_kick(Client *client, std::vector<std::string> collections)
+{
+    std::string rply;
+    if(collections.size()<3)
+    {
+        rply = ERR_NEEDMOREPARAMS(client->get_nick_name(), "KICK");
+        send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        return;
+    }
+    if(!has_this_channel(collections[1]))
+    {
+        rply = ERR_NOSUCHCHANNEL(client->get_nick_name(), collections[1]);
+        send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        return;
+    }
+    if(!is_member_of_channel(client, collections[1]))
+    {
+        rply = ERR_NOTONCHANNEL(client->get_nick_name(), collections[1]);
+        send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        return;
+    }
+    if(!chnnls[collections[1]]->is_operator(client))
+    {
+        rply = ERR_CHANOPRIVSNEEDED(client->get_nick_name(), collections[1]);
+        send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        return;
+    }
+    Client *will_thrown = get_client_for_fd(collections[2]);
+    if(!will_thrown || !is_member_of_channel(will_thrown, collections[1]))
+    {
+        rply = ERR_USERNOTINCHANNEL(client->get_nick_name(), collections[2], collections[1]);
+        send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+        return;
+    }
+    std::string prefix = ":" + client->get_nick_name() + "!" + client->get_user_name() + "@localhost";
+    std::string msg;
+    if(collections.size()>3 && collections[3].size()>0)
+        msg = prefix + " KICK "+collections[1] + " "+collections[2]+ " :"+collections[3]+"\r\n";
+    else
+        msg = prefix + " KICK "+collections[1] + " "+collections[2]+ " :"+client->get_nick_name()+"\r\n";
+    chnnls[collections[1]]->broadcast_msg(msg, -1);
+    chnnls[collections[1]]->remove_members(will_thrown);
+    if(chnnls[collections[1]]->get_members().empty())
+    {
+        Channel *tmp = chnnls[collections[1]];
+        chnnls.erase(collections[1]);
+        delete tmp;
+    }
+}
+
 void Server::execute_server()
 {
     while(1)

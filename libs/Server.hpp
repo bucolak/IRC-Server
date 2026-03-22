@@ -41,6 +41,9 @@ class Server {
         void handle_user(Client *client, std::vector<std::string> collections);
         void handle_join(Client *client, std::vector<std::string> collections);
         void handle_privmsg(Client *client, std::vector<std::string> collections);
+        void handle_part(Client *client, std::vector<std::string> collections);
+        void handle_quit(Client *client, std::vector<std::string> collections);
+        void handle_kick(Client *client, std::vector<std::string> collections);
 
         bool is_same_nick(std::string nick);
         bool is_valid_nick(std::string nick);

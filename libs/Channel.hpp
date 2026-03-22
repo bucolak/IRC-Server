@@ -20,13 +20,15 @@ class Channel {
         Channel(std::string channel_name);
         ~Channel();
 
+        std::string get_channel_name();
         std::string get_topic();
         std::string get_members();
-
 
         void add_members(Client *client, bool is_oprtr);
         void remove_members(Client *client);
         void broadcast_msg(std::string &msg, int fd);
+
+        bool is_operator(Client *client);
 };
 
 
