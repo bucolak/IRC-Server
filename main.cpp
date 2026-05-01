@@ -6,17 +6,19 @@
 #include <poll.h>
 #include <unistd.h>
 #include <vector>
+#include <signal.h>
 #include "libs/Server.hpp"
 
 int main(int argc, char *argv[])
 {
-    Server s1(atoi(argv[1]), argv[2]);
-
+    signal(SIGPIPE, SIG_IGN);
     if(argc != 3)
     {
         std::cout<<"Usage: ./ircserv <port> <password>"<<std::endl;
         return 0;
     }
+
+    Server s1(atoi(argv[1]), argv[2]);
 
     try
     {

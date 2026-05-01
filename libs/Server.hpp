@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <sstream>
 #include "Channel.hpp"
+#include <cstdlib>
 
 
 class Server {
@@ -33,7 +34,8 @@ class Server {
         void init_server();
         void execute_server();
         void find_first_msg(int wc);
-        void parse_msg(std::string str);
+        void parse_msg(std::string str, Client *client);
+        void mode_parser(Client *client, std::vector<std::string> collections);
         void handle_cmds();
 
         void handle_pass(Client *client, std::vector<std::string> collections);
@@ -44,6 +46,9 @@ class Server {
         void handle_part(Client *client, std::vector<std::string> collections);
         void handle_quit(Client *client, std::vector<std::string> collections);
         void handle_kick(Client *client, std::vector<std::string> collections);
+        void handle_topic(Client *client, std::vector<std::string> collections);
+        void handle_invite(Client *client, std::vector<std::string> collections);
+        void handle_mode(Client *client, std::vector<std::string> collections);
 
         bool is_same_nick(std::string nick);
         bool is_valid_nick(std::string nick);

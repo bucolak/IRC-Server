@@ -27,7 +27,7 @@ Kural: PASS, NICK ve USER üçlüsü tamamlandığı an kullanıcıya RPL_WELCOM
 Parametre Yoksa: ERR_NEEDMOREPARAMS (461).
 
 Kanal Adı Yanlışsa: Kanal adı # veya & ile başlamıyorsa ERR_NOSUCHCHANNEL (403) yolla.
-
+A.
 Kullanıcı Kayıtlı Değilse: PASS, NICK, USER bitmeden JOIN yapamaz.
 
 5. PRIVMSG (Mesaj Gönderme)
@@ -70,3 +70,15 @@ Ne zaman true olur? Kullanıcı hem PASS, hem NICK, hem de USER adımlarını ba
 
 Önemi: Bu true olduğu an kullanıcıya RPL_WELCOME (001) mesajı gider ve adam artık JOIN, PRIVMSG gibi komutları kullanabilir hale gelir.
 
+--------------------------------------------------------------
+EKSİKLİKLER:
+-> Client quit yaptığı zaman serverdan ayrılmıyor. mesajı iki kere yazdırıyor ama hala serverda
+gözüküyor.
+-> quit yaptığı zaman serverdan atmadığı için tekrar bağlandığı zaman aynı kullanıcı adıyla
+ve şifreyle devam edebiliyor
+-> "client went" yazsa bile tekrar şifresiz kanala katılabiliyor
+-> PASS girilmeden, her şeyden önce QUIT deyince böyle bir çıktı veriyor. doğru mu yanlış mı bilmiyorum:
+QUIT
+PASS 123
+nc: write failed (0/2): Broken pipe
+tek QUIT de asla çıkmıyor. iki kere yazmak gerekiyor onda da broken pipe hatası veriyor
