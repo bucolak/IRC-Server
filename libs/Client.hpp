@@ -1,10 +1,7 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
-#include <iostream>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <vector>
+#include <string>
 
 class Client {
 
@@ -12,10 +9,12 @@ private:
   int client_fd;
   std::string user_name;
   std::string nick_name;
+  std::string real_name;
   std::string buffer;
   int is_registered;
   bool is_authenticated;
   bool quit_requested;
+  bool is_one;
 
 public:
   Client(int client_fd);
@@ -25,13 +24,17 @@ public:
   bool get_quit_requested();
   std::string get_user_name();
   std::string get_nick_name();
+  std::string get_real_name();
   std::string get_buffer();
   void set_buffer(std::string str);
   void set_is_authenticated(bool state);
   void set_is_registered(bool state);
   void set_nick_name(std::string nick);
   void set_user_name(std::string user);
+  void set_real_name(std::string real);
   void set_quit_requested(bool state);
+  void set_is_one(bool sign);
+  bool get_is_one();
 
   void buffer_append(std::string newstr);
 

@@ -71,14 +71,61 @@ Ne zaman true olur? Kullanıcı hem PASS, hem NICK, hem de USER adımlarını ba
 Önemi: Bu true olduğu an kullanıcıya RPL_WELCOME (001) mesajı gider ve adam artık JOIN, PRIVMSG gibi komutları kullanabilir hale gelir.
 
 --------------------------------------------------------------
-EKSİKLİKLER:
+EKSİKLİKLER: bu yazdıklarımız daha ziyade netcat için geçerliydi, irssi'de bu sorunlar devam etmiyor
 -> Client quit yaptığı zaman serverdan ayrılmıyor. mesajı iki kere yazdırıyor ama hala serverda
-gözüküyor.
+gözüküyor. ✅
 -> quit yaptığı zaman serverdan atmadığı için tekrar bağlandığı zaman aynı kullanıcı adıyla
-ve şifreyle devam edebiliyor
--> "client went" yazsa bile tekrar şifresiz kanala katılabiliyor
--> PASS girilmeden, her şeyden önce QUIT deyince böyle bir çıktı veriyor. doğru mu yanlış mı bilmiyorum:
+ve şifreyle devam edebiliyor✅
+-> "client went" yazsa bile tekrar şifresiz kanala katılabiliyor✅
+-> PASS girilmeden, her şeyden önce QUIT deyince böyle bir çıktı veriyor. doğru mu yanlış mı bilmiyorum:✅
 QUIT
 PASS 123
 nc: write failed (0/2): Broken pipe
 tek QUIT de asla çıkmıyor. iki kere yazmak gerekiyor onda da broken pipe hatası veriyor
+
+-> client quit mesajında yanlış nick yazdırılıyor. aaydogdu kim???? nick girmeden servera kabul etmeli mi? handlela✅
+-> ./msg yanlış parselanıyor olabilir. yanlış komut işleme hatası var ✅
+-> /msg buket selam yazınca kendi kendine 2 kez mesaj gönderiyor (liberachatte de aynısı oluyor)✅
+
+-> KICK yapınca da quit olmuyor. quitlerde bir sıkıntı var genel olarak.✅
+-> pass, nick, username vs hiçbir şey girilmeden kanala join olmayı engelle
+-> client bağlandığı zaman welcome mesajında <nick><user>@<client's hostname> yazması lazım. 
+bizde <nick><nick> yazdırıyor ✅
+
+-> protokol mesajı numaralarını servera yazdıralım mı? operatör olmayan biri kick yapmaya çalışınca
+hata kodu 482 mesela ama bunu göstermiyoruz. 
+
+YAPILANLAR:
+(05/05/2026 - zehra)
++ senksonizasyon süresi düzeltildi (240saniyeden 0 saniyeye düştü)
++ mesajlaşırken ve ayrılma mesajında ekrana yazdırılan fazladan : gitti
++ kanal başında eksik server bilgileri ve operatör bilgi ve izinleri eklendi
++ /who çıktısındaki tutarsızlık giderildi
++ /kick logları düzeltildi. mesajla beraber kicklenmesi halinde köşeli parantez boş kalıyordu
+ /kick #kanal kullanıcı mesaj vd /kick kullanıcı #kanal mesaj iki syntax da çalışıyor, liberachate göre çıktı veriyor
+ + topic değiştirmede operator yetkisi düzelmişti diye hatırlıyordum, geri gelmiş
+ (07/05/2026)
+ + /mode mesajlarını ve ekrana yazdırılmadaki gecikme düzeltildi
+
+ ----------------------------------------------
+ -> PRIVMSG düzeltilecek (YES)
+ -> 1000 512 yapılacak (YES)
+ -> handle_quit başındaki if kontrolünün kalkması gerekebilir (YES)
+ -> handle_mode (YES)
+    if(collections.size() == 3 && !collections[2].empty() && collections[2][0] != '+' && collections[2][0] != '-')
+    {
+        if(collections[2] == "b")
+        {
+            rply = RPL_ENDOFBANLIST(client->get_nick_name(), collections[1]);
+            send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+            return;
+        }
+        else
+        {
+            rply = ERR_UNKNOWNMODE(client->get_nick_name(), collections[2]);
+            send(client->get_client_fd(), rply.c_str(), rply.length(), 0);
+            return;
+        }
+    }
+
+ 

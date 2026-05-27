@@ -1,11 +1,13 @@
 #ifndef CHANNEL_HPP
 #define CHANNEL_HPP
 
-#include <iostream>
+#include <string>
 #include <map>
-#include "Client.hpp"
 #include <sstream>
+#include <ctime>
 #include <vector>
+#include "Client.hpp"
+
 
 class Channel {
 
@@ -14,8 +16,10 @@ class Channel {
         std::string channel_topic;
         std::string channel_key; // Kanal şifresi (+k modu için)
         unsigned int limit_user; // Kanal kişi sınırı (+l modu için)
+        bool is_channel_limited;
         bool only_invite; // sadece davetle girilebilir (+i modu)
         bool is_restricted_topic; // Başlık değiştirme yetkisini kısıtlar (+t modu).
+        std::time_t creation_time;
         std::vector<Client *> intvited_users_list; // Davet edilen kişilerin listesi.
         std::map<Client *, bool> members;
     public:
@@ -27,13 +31,18 @@ class Channel {
         std::string get_members();
         std::string get_modes();
         std::string get_channel_key();
+        std::string get_creation_time();
+
         unsigned int get_limit_user();
+        unsigned int get_member_count();
         bool get_only_invite();
         bool get_is_restricted_topic();
+        bool get_is_channel_limited();
         void set_channel_key(std::string channel_key);
         void set_limit_user(unsigned int limit_user);
         void set_only_invite(bool only_invite);
         void set_is_restricted_topic(bool is_restricted_topic);
+        void set_is_channel_limited(bool is_channel_limited);
         void set_topic(std::string channel_topic);
         void set_operator(Client *client, bool sign);
     
@@ -44,6 +53,8 @@ class Channel {
         std::vector<int> get_member_fds();
 
         bool is_operator(Client *client);
+        bool is_member(Client *client);
+        bool is_user_invited(Client *client);
 };
 
 

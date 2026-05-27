@@ -5,6 +5,7 @@ Client::Client(int client_fd) {
   this->is_registered = 0;
   this->is_authenticated = false;
   this->quit_requested = false;
+  is_one = false;
 }
 
 int Client::get_client_fd() { return client_fd; }
@@ -15,7 +16,11 @@ std::string Client::get_user_name() { return user_name; }
 
 std::string Client::get_nick_name() { return nick_name; }
 
+std::string Client::get_real_name() { return real_name; }
+
 std::string Client::get_buffer() { return buffer; }
+
+
 
 bool Client::get_is_authenticated() { return is_authenticated; }
 
@@ -31,6 +36,18 @@ void Client::set_nick_name(std::string nick) { nick_name = nick; }
 
 void Client::set_user_name(std::string user) { user_name = user; }
 
+void Client::set_real_name(std::string real) { real_name = real; }
+
 void Client::set_quit_requested(bool state) { quit_requested = state; }
 
 void Client::buffer_append(std::string newstr) { buffer += newstr; }
+
+void Client::set_is_one(bool sign)
+{
+  is_one = sign;
+}
+
+bool Client::get_is_one()
+{
+  return is_one;
+}

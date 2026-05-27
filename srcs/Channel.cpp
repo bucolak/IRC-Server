@@ -1,8 +1,14 @@
 #include "../libs/Channel.hpp"
+#include <sys/socket.h>
 
 Channel::Channel(std::string channel_name)
 {
     this->channel_name = channel_name;
+    this->only_invite = false;
+    this->is_restricted_topic = true;
+    this->is_channel_limited = false;
+    this->limit_user = 0;
+    this->creation_time = std::time(NULL);
 }
 
 std::string Channel::get_channel_name()
@@ -20,9 +26,21 @@ std::string Channel::get_channel_key()
     return channel_key;
 }
 
+std::string Channel::get_creation_time()
+{
+    std::stringstream ss;
+    ss << creation_time;
+    return ss.str();
+}
+
 unsigned int Channel::get_limit_user()
 {
     return limit_user;
+}
+
+unsigned int Channel::get_member_count()
+{
+    return members.size();
 }
 
 bool Channel::get_is_restricted_topic()
@@ -33,6 +51,11 @@ bool Channel::get_is_restricted_topic()
 bool Channel::get_only_invite()
 {
     return only_invite;
+}
+
+bool Channel::get_is_channel_limited()
+{
+    return is_channel_limited;
 }
 
 void Channel::set_topic(std::string channel_topic)
@@ -60,6 +83,11 @@ void Channel::set_is_restricted_topic(bool is_restricted_topic)
     this->is_restricted_topic = is_restricted_topic;
 }
 
+void Channel::set_is_channel_limited(bool is_channel_limited)
+{
+    this->is_channel_limited = is_channel_limited;
+}
+
 void Channel::set_operator(Client *client, bool sign)
 {
     members[client] = sign;
@@ -72,9 +100,9 @@ std::string Channel::get_members()
     for(it = members.begin(); it != members.end(); ++it)
     {
         if(it->second == true)
-            str += (" @" + it->first->get_user_name());
+            str += (" @" + it->first->get_nick_name());
         else
-            str += (" " + it->first->get_user_name());
+            str += (" " + it->first->get_nick_name());
     }
     return str;
 }
@@ -101,7 +129,7 @@ std::string Channel::get_modes()
     if(is_restricted_topic)
         modes+="t";
     if(modes == "+")
-        return "";
+        return "+";
     return modes + will_append;
 }
 
@@ -138,6 +166,17 @@ std::vector<int> Channel::get_member_fds()
     return out;
 }
 
+bool Channel::is_user_invited(Client *client)
+{
+    std::vector<Client *>::iterator it;
+    for (it = intvited_users_list.begin(); it != intvited_users_list.end(); ++it)
+    {
+        if (*it == client)
+            return true;
+    }
+    return false;
+}
+
 bool Channel::is_operator(Client *client)
 {
     for(std::map<Client *, bool>::iterator it = members.begin(); it != members.end(); ++it)
@@ -146,6 +185,11 @@ bool Channel::is_operator(Client *client)
             return true;
     }
     return false;
+}
+
+bool Channel::is_member(Client *client)
+{
+    return members.find(client) != members.end();
 }
 
 

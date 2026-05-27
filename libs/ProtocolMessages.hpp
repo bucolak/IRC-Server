@@ -1,7 +1,7 @@
 #ifndef PROTOCOLMESSAGES_HPP
 #define PROTOCOLMESSAGES_HPP
 
-#include <iostream>
+#include <string>
 
 #define ERR_NEEDMOREPARAMS(client, command) (std::string(":") + "ircserv 461 " + client + " " + command + " :Not enough parameters\r\n") //ALSO FOR USER
 
@@ -11,15 +11,15 @@
 
 #define ERR_NONICKNAMEGIVEN(client) (std::string(":") + "ircserv 431 " + client + " :No nickname given\r\n")
 
-#define ERR_ERRONEUSNICKNAME(client,nick) (std::string(":") + "ircserv 432 " + client + " " + nick + " :Erroneus nickname\r\n")
+#define ERR_ERRONEUSNICKNAME(client,nick) (std::string(":") + "ircserv 432 " + client + " " + nick + " :Erroneous nickname\r\n")
 
 #define ERR_NICKNAMEINUSE(client,nick) (std::string(":") + "ircserv 433 " + client + " " + nick + " :Nickname is already in use\r\n")
-
-#define ERR_NICKCOLLISION(client,nick) (std::string(":") + "ircserv 436 " + client + " " + nick + " :Nickname collision KILL from <user>@<host>\r\n")
 
 #define ERR_NOSUCHCHANNEL(client,channel) (std::string(":") + "ircserv 403 " + client + " " + channel + " :No such channel\r\n")
 
 #define ERR_BADCHANNELKEY(client,channel) (std::string(":") + "ircserv 475 " + client + " " + channel + " :Cannot join channel (+k)\r\n")
+
+#define ERR_INVITEONLYCHAN(client, channel) (std::string(":") + "ircserv 473 " + client + " " + channel + " :Cannot join channel (+i)\r\n")
 
 #define ERR_NOTONCHANNEL(client,channel) (std::string(":") + "ircserv 442 " + client + " " + channel + " :You're not on that channel\r\n")
 
@@ -39,6 +39,10 @@
 
 #define ERR_NOTREGISTERED(client) (":ircserv 451 " + client + " :You have not registered\r\n")
 
+#define ERR_PASSREQUIRED(client) (":ircserv 451 " + client + " :You must send PASS before registering\r\n")
+
+#define ERROR_PASSREQUIRED(command) ("ERROR :Closing Link: PASS required before " + command + "\r\n")
+
 #define RPL_NOTOPIC(client, channel) (":ircserv 331 " + client + " " + channel + " :No topic is set\r\n")
 
 #define RPL_TOPIC(client, channel, topic) (":ircserv 332 " + client + " " + channel + " :" + topic + "\r\n")
@@ -47,12 +51,22 @@
 
 #define RPL_ENDOFNAMES(client, channel) (":ircserv 366 " + client + " " + channel + " :End of /NAMES list\r\n")
 
+#define RPL_WHOREPLY(client, channel, user, host, server, nick, flags, realname) (":ircserv 352 " + client + " " + channel + " " + user + " " + host + " " + server + " " + nick + " " + flags + " :0 " + realname + "\r\n")
+
+#define RPL_ENDOFWHO(client, mask) (":ircserv 315 " + client + " " + mask + " :End of /WHO list\r\n")
+
 #define ERR_USERONCHANNEL(client, nick, channel) (":ircserv 443 " + client +" "+ nick+" "+ channel+" :is already on channel\r\n")
 
 #define RPL_INVITING(client, nick, channel) (":ircserv 341 " + client +" "+ nick+" "+ channel+"\r\n")
 
 #define RPL_CHANNELMODEIS(client, channel, modes) (":ircserv 324 " + client +" "+ channel+" "+ modes+"\r\n")
 
+#define RPL_CREATIONTIME(client, channel, timestamp) (":ircserv 329 " + client + " " + channel + " " + timestamp + "\r\n")
+
 #define ERR_UNKNOWNMODE(client, modechar) (":ircserv 472 " + client + " " + modechar + " :is unknown mode char to me\r\n")
+
+#define RPL_ENDOFBANLIST(client, channel) (":ircserv 368 " + client + " " + channel + " :End of channel ban list\r\n")
+
+#define ERR_CHANNELISFULL(client, channel) (":ircserv 471 " + client + " " + channel + " :Cannot join channel (+l)\r\n")
 
 #endif
