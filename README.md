@@ -1,6 +1,6 @@
 _This project has been created as part of the 42 curriculum by bucolak, aaydogdu_
 
-## Description: What is IRC?
+## Description: What is IRC? 
 IRC stands for "Internet Relay Chat" and it is an text-based internet application that provides communicate quickly with other users. IRC, is one of the earliest network protocols for text messaging and multi-participant chatting. It was created in 1988 by Jakko Oikarinen. It is generally designed for chat, one-to-one private messages and group communication through public channels.
 
 As a part of 42 curriculum, we developed an internet relay chat called "ft_irc". Our project "ft_irc" provides very basics of a real internet relay chat. By compiling the project you run the server and you can connect to this server as a client. We took "irssi client" as a reference in this project. after connecting as a client to the server, you can be able to set a nickname, set a username, chat privately with other users or join to a channel and chat publicly etc.  
